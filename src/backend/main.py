@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, HTTPException
 from utils.preprocessor import preprocess
 from utils.custom_obj import L1Dist
+from utils.dir_tree import DirTree
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from uuid import uuid4
@@ -22,12 +23,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+db_tree = DirTree(db_path=DB_PATH)
+
 @app.delete('/reset')
 def reset_db():
     try:
         dirs = os.listdir(os.getcwd())
         for folder in dirs:
             shutil.rmtree(folder)
+        db_tree.tree = {}
+        db_tree.save_tree()
         return {'message':'DB reset successful'}
     except:
         raise HTTPException(status_code=500, detail='Internal Server Error!')
@@ -42,6 +47,7 @@ def create_user(name:str, photo:UploadFile):
         photo.filename = file_name
         with open(file_name, "wb") as buffer:
             shutil.copyfileobj(photo.file, buffer)
+        db_tree.update_tree(name=name, file_name=file_name)
         return {"message": "User created successfully!"}
     except:
         raise HTTPException(status_code=500, detail='Internal Server Error!')
