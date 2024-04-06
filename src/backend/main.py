@@ -7,6 +7,7 @@ import os
 from uuid import uuid4
 import shutil
 from keras.models import load_model
+from utils.classifiers import siamese_classifier
 
 DB_PATH = 'db'
 app = FastAPI()
@@ -57,7 +58,7 @@ def create_user(name:str, photo:UploadFile):
         return {"message": "User created successfully!"}
     except:
         raise HTTPException(status_code=500, detail='Internal Server Error!')
-    
+
 @app.post('/evaluate')
 async def evaluate(photo:UploadFile):
     try:
@@ -67,26 +68,10 @@ async def evaluate(photo:UploadFile):
         with open('input.jpg', 'wb+') as buffer:
             buffer.write(photo)
         input_img = preprocess(file_path=photo, ftype='byte')
-        print(db_tree.tree.items())
-        prob_map = {}
-        for name, files in db_tree.tree.items():
-            total_probab = 0
-            for file in files:
-                path = os.path.join(DB_PATH, name, file)
-                validation_img = preprocess(path)
-                probability = siamese_model.predict([input_img, validation_img])[0][0]
-                total_probab+=probability
-            mean_probab = total_probab/len(files)
-            prob_map[name] = mean_probab
-        max_prob = 0
-        person = ''
-        for name, prob in prob_map.items():
-            if prob>max_prob:
-                max_prob = prob
-                person = name
-        if max_prob<0.6:
-            return {'person': 'Unrecognized'}
-        return {'person':person}
+        person = siamese_classifier(input_img, siamese_model, db_tree,preprocess, DB_PATH)
+        if person is None:
+            return {'siamese':'unrecognized'}
+        return {'siamese':person}
                     
     except:
         raise HTTPException(status_code=500, detail='Internal Server Error!')
