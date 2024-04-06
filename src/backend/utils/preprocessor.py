@@ -1,8 +1,13 @@
 import tensorflow as tf
 
-def preprocess(file_path):
+def preprocess(file_path, ftype = 'str'):
     # Read in image from file path
-    byte_img = tf.io.read_file(file_path)
+    if ftype == 'str': 
+        byte_img = tf.io.read_file(file_path)
+    elif ftype == 'byte':
+        byte_img = file_path
+    else:
+        raise ValueError("Invalid ftype: ftype can be 'str' or 'byte'")
     # Load in the image 
     img = tf.io.decode_jpeg(byte_img)
     

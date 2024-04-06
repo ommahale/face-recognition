@@ -2,3 +2,4 @@
 venv
 *db
 *face_model
+*.keras

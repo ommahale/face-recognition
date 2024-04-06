@@ -24,5 +24,7 @@ class DirTree:
         return self.tree
     
     def update_tree(self, name, file_name):
-        self.tree[name].append(file_name)
+        value = self.tree.get(name,[])
+        value.append(file_name)
+        self.tree[name] = value
         self.save_tree()
