@@ -62,6 +62,10 @@ def create_user(name:str, photo:UploadFile):
 async def evaluate(photo:UploadFile):
     try:
         photo = await photo.read()
+        if os.path.exists('input.jpg'):
+            os.remove('input.jpg')
+        with open('input.jpg', 'wb+') as buffer:
+            buffer.write(photo)
         input_img = preprocess(file_path=photo, ftype='byte')
         print(db_tree.tree.items())
         prob_map = {}
