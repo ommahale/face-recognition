@@ -75,6 +75,6 @@ async def evaluate(photo:UploadFile):
     input_img = preprocess(file_path=photo, ftype='byte')
     person_siamese = siamese_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
     person_vgg = siamese_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
-    person_deep = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
-    return {'siamese':person_siamese, 'vgg':person_vgg, 'deepface': person_deep}
+    person_facenet = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
+    return {'siamese':person_siamese, 'vgg':person_vgg, 'facenet': person_facenet}
                     
