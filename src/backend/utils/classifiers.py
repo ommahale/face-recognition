@@ -17,6 +17,6 @@ def siamese_classifier(input_img, siamese_model, db_tree, preprocessor, db_path)
         if prob>max_prob:
             max_prob = prob
             person = name
-    if max_prob<0.6:
+    if max_prob<0.5:
         return None
     return person

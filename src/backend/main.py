@@ -8,10 +8,13 @@ from uuid import uuid4
 import shutil
 from keras.models import load_model
 from utils.classifiers import siamese_classifier
-
+from uvicorn import run
 DB_PATH = 'db'
 app = FastAPI()
-siamese_model = load_model('siamesemodel.keras', custom_objects={'L1Dist':L1Dist})
+models = {
+    'siamese':load_model('siamesemodel.keras', custom_objects={'L1Dist':L1Dist}),
+    'vgg': load_model('vgg_model.keras', custom_objects={'L1Dist':L1Dist}),
+}
 origins = [
     'http://localhost:5173'
 ]
@@ -26,6 +29,8 @@ app.add_middleware(
 )
 
 db_tree = DirTree(db_path=DB_PATH)
+print('Building Databse tree')
+db_tree.make_tree()
 db_tree.init_tree()
 @app.delete('/reset')
 def reset_db():
@@ -68,10 +73,9 @@ async def evaluate(photo:UploadFile):
         with open('input.jpg', 'wb+') as buffer:
             buffer.write(photo)
         input_img = preprocess(file_path=photo, ftype='byte')
-        person = siamese_classifier(input_img, siamese_model, db_tree,preprocess, DB_PATH)
-        if person is None:
-            return {'siamese':'unrecognized'}
-        return {'siamese':person}
+        person_siamese = siamese_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
+        person_vgg = siamese_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
+        return {'siamese':person_siamese, 'vgg':person_vgg}
                     
     except:
         raise HTTPException(status_code=500, detail='Internal Server Error!')
