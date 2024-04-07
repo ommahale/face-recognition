@@ -80,6 +80,9 @@ async def evaluate(photo:UploadFile):
     person_siamese = tf_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
     person_vgg = tf_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
     person_mbnv2 = tf_classifier(input_img, models['mbnv2'], db_tree,preprocess, DB_PATH)
-    person_facenet = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
+    try:
+        person_facenet = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
+    except:
+        person_facenet = None
     return {'siamese':person_siamese, 'vgg':person_vgg, 'facenet': person_facenet, 'mobile_net_v2':person_mbnv2}
                     
