@@ -15,6 +15,9 @@ models = {
     'siamese':load_model('siamesemodel.keras', custom_objects={'L1Dist':L1Dist}),
     'vgg': load_model('vgg_model.keras', custom_objects={'L1Dist':L1Dist}),
 }
+if not os.path.exists(DB_PATH):
+    os.mkdir(DB_PATH)
+
 origins = [
     'http://localhost:5173'
 ]
