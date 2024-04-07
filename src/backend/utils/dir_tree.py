@@ -13,7 +13,10 @@ class DirTree:
     def make_tree(self)->dict:
         dirs = os.listdir(self.db_path)
         for folder in dirs:
-            files = os.listdir(os.path.join(self.db_path, folder))
+            try:
+                files = os.listdir(os.path.join(self.db_path, folder))
+            except:
+                continue
             self.tree[folder]=files
         self.save_tree()
         return self.tree

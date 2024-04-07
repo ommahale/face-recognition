@@ -8,7 +8,7 @@ from uuid import uuid4
 import shutil
 from keras.models import load_model
 from utils.classifiers import siamese_classifier
-from uvicorn import run
+from deepface import DeepFace
 DB_PATH = 'db'
 app = FastAPI()
 models = {
@@ -66,16 +66,15 @@ def create_user(name:str, photo:UploadFile):
 
 @app.post('/evaluate')
 async def evaluate(photo:UploadFile):
-    try:
-        photo = await photo.read()
-        if os.path.exists('input.jpg'):
-            os.remove('input.jpg')
-        with open('input.jpg', 'wb+') as buffer:
-            buffer.write(photo)
-        input_img = preprocess(file_path=photo, ftype='byte')
-        person_siamese = siamese_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
-        person_vgg = siamese_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
-        return {'siamese':person_siamese, 'vgg':person_vgg}
+    
+    photo = await photo.read()
+    if os.path.exists('input.jpg'):
+        os.remove('input.jpg')
+    with open('input.jpg', 'wb+') as buffer:
+        buffer.write(photo)
+    input_img = preprocess(file_path=photo, ftype='byte')
+    person_siamese = siamese_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
+    person_vgg = siamese_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
+    person_deep = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
+    return {'siamese':person_siamese, 'vgg':person_vgg, 'deepface': person_deep}
                     
-    except:
-        raise HTTPException(status_code=500, detail='Internal Server Error!')
