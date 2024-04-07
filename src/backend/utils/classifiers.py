@@ -1,6 +1,6 @@
 import os
 
-def siamese_classifier(input_img, siamese_model, db_tree, preprocessor, db_path):
+def tf_classifier(input_img, siamese_model, db_tree, preprocessor, db_path):
     prob_map = {}
     for name, files in db_tree.tree.items():
         total_probab = 0

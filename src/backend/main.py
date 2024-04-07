@@ -7,13 +7,14 @@ import os
 from uuid import uuid4
 import shutil
 from keras.models import load_model
-from utils.classifiers import siamese_classifier
+from utils.classifiers import tf_classifier
 from deepface import DeepFace
 DB_PATH = 'db'
 app = FastAPI()
 models = {
     'siamese':load_model('siamesemodel.keras', custom_objects={'L1Dist':L1Dist}),
     'vgg': load_model('vgg_model.keras', custom_objects={'L1Dist':L1Dist}),
+    'mbnv2': load_model('mbnv2_model.keras', custom_objects={'L1Dist':L1Dist}),
 }
 if not os.path.exists(DB_PATH):
     os.mkdir(DB_PATH)
@@ -76,8 +77,9 @@ async def evaluate(photo:UploadFile):
     with open('input.jpg', 'wb+') as buffer:
         buffer.write(photo)
     input_img = preprocess(file_path=photo, ftype='byte')
-    person_siamese = siamese_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
-    person_vgg = siamese_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
+    person_siamese = tf_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
+    person_vgg = tf_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
+    person_mbnv2 = tf_classifier(input_img, models['mbnv2'], db_tree,preprocess, DB_PATH)
     person_facenet = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
-    return {'siamese':person_siamese, 'vgg':person_vgg, 'facenet': person_facenet}
+    return {'siamese':person_siamese, 'vgg':person_vgg, 'facenet': person_facenet, 'mobile_net_v2':person_mbnv2}
                     
