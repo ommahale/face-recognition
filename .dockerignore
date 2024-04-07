@@ -1,0 +1,5 @@
+src/backend/face_model
+src/backend/db
+src/backend/.venv
+*__pycache__
+frontend/node_modules
