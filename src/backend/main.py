@@ -12,9 +12,9 @@ from deepface import DeepFace
 DB_PATH = 'db'
 app = FastAPI()
 models = {
-    'siamese':load_model('siamesemodel.keras', custom_objects={'L1Dist':L1Dist}),
-    'vgg': load_model('vgg_model.keras', custom_objects={'L1Dist':L1Dist}),
-    'mbnv2': load_model('mbnv2_model.keras', custom_objects={'L1Dist':L1Dist}),
+    'siamese':load_model('models/siamesemodel.keras', custom_objects={'L1Dist':L1Dist}),
+    'vgg': load_model('models/vgg_model.keras', custom_objects={'L1Dist':L1Dist}),
+    'mbnv2': load_model('models/mbnv2_model.keras', custom_objects={'L1Dist':L1Dist}),
 }
 if not os.path.exists(DB_PATH):
     os.mkdir(DB_PATH)
