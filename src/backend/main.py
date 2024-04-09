@@ -84,5 +84,9 @@ async def evaluate(photo:UploadFile):
         person_facenet = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
     except:
         person_facenet = None
-    return {'siamese':person_siamese, 'vgg':person_vgg, 'facenet': person_facenet, 'mobile_net_v2':person_mbnv2}
+    try:
+        person_facenet512 = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet512')[0]['identity'][0].split('\\')[-2]
+    except:
+        person_facenet512 = None
+    return {'siamese':person_siamese, 'vgg':person_vgg, 'facenet': person_facenet, 'facenet512': person_facenet512, 'mobile_net_v2':person_mbnv2}
                     
