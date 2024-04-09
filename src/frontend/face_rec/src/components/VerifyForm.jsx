@@ -1,15 +1,15 @@
-
 // VerifyForm.js
 import React, { useState, useRef } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
-import { Box, Button, Center, Image, HStack } from '@chakra-ui/react';
+import { Box, Button, Center, Image, HStack, Text, VStack } from '@chakra-ui/react';
 
 const VerifyForm = () => {
     const webcamRef = useRef(null);
     const [photoCaptured, setPhotoCaptured] = useState(false);
     const [capturedImage, setCapturedImage] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [predictions, setPredictions] = useState(null);
 
     const capture = () => {
         const imageSrc = webcamRef.current.getScreenshot();
@@ -20,6 +20,7 @@ const VerifyForm = () => {
     const resetCapture = () => {
         setPhotoCaptured(false);
         setCapturedImage(null);
+        setPredictions(null); // Reset predictions
     };
 
     const handleVerify = async () => {
@@ -41,14 +42,14 @@ const VerifyForm = () => {
                     formData.append('photo', blob, 'photo.jpg');
 
                     // Make axios call
-                    await axios.post('http://127.0.0.1:8000/evaluate', formData, {
+                    const response = await axios.post('http://127.0.0.1:8000/evaluate', formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data'
                         }
                     });
 
-                    // Handle response if needed
-                    console.log('Verification successful');
+                    // Handle response
+                    setPredictions(response.data);
                 }, 'image/jpeg');
             };
 
@@ -85,6 +86,15 @@ const VerifyForm = () => {
                         </Button>
                     )}
                 </HStack>
+
+                {/* Display predictions */}
+                {predictions && (
+                    <VStack mt={4} align="start">
+                        {Object.keys(predictions).map((key) => (
+                            <Text key={key}>{predictions[key].prediction}</Text>
+                        ))}
+                    </VStack>
+                )}
             </Box>
         </Center>
     );
