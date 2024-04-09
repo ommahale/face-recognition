@@ -1,3 +1,4 @@
+
 // RegisterForm.js
 import React, { useState, useRef } from 'react';
 import Webcam from 'react-webcam';
@@ -17,13 +18,13 @@ const RegisterForm = ({ onRegister }) => {
             const formData = new FormData();
 
             // Convert base64 to Blob
-            const blob = await fetch(capturedImage).then((res) => res.blob());
+            const blob = await fetch(capturedImage).then(res => res.blob());
 
             // Append Blob to FormData with correct content type
             formData.append('photo', blob, 'photo.jpg');
 
             // Make axios call
-            const response = await axios.post(`https://127.0.0.1:8000/register?name=${name}`, formData, {
+            const response = await axios.post(`http://127.0.0.1:8000/register?name=${name}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -42,10 +43,26 @@ const RegisterForm = ({ onRegister }) => {
         }
     };
 
-    const capture = () => {
+    const capture = async () => {
         const imageSrc = webcamRef.current.getScreenshot();
+
+        // Convert base64 to JPEG format
+        const canvas = document.createElement('canvas');
+        const image = new Image();
+        image.src = imageSrc;
+        await new Promise(resolve => {
+            image.onload = function () {
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0);
+                resolve();
+            };
+        });
+
+        const jpegUrl = canvas.toDataURL('image/jpeg');
         setPhotoCaptured(true);
-        setCapturedImage(imageSrc);
+        setCapturedImage(jpegUrl);
     };
 
     const resetCapture = () => {
@@ -62,25 +79,26 @@ const RegisterForm = ({ onRegister }) => {
                     <img src={capturedImage} alt="Captured" style={{ maxWidth: '100%' }} />
                 )}
                 <Input mt={4} placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value)} />
-               <HStack>
-                {photoCaptured && (
-                    <Button mt={4} colorScheme="blue" onClick={handleRegister} isLoading={submitting}>
-                        {submitting ? 'Submitting...' : 'Submit'}
-                    </Button>
-                )}
-                {!photoCaptured ? (
-                    <Button mt={4} colorScheme="teal" onClick={capture}>
-                        Capture
-                    </Button>
-                ) : (
-                    <Button mt={4} colorScheme="red" onClick={resetCapture}>
-                        Reset
-                    </Button>
-                )}
-               </HStack>
+                <HStack mt={4}>
+                    {photoCaptured && (
+                        <Button colorScheme="blue" onClick={handleRegister} isLoading={submitting}>
+                            {submitting ? 'Submitting...' : 'Submit'}
+                        </Button>
+                    )}
+                    {!photoCaptured ? (
+                        <Button colorScheme="teal" onClick={capture}>
+                            Capture
+                        </Button>
+                    ) : (
+                        <Button colorScheme="red" onClick={resetCapture}>
+                            Reset
+                        </Button>
+                    )}
+                </HStack>
             </Box>
         </Center>
     );
 };
 
 export default RegisterForm;
+

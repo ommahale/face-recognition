@@ -1,3 +1,4 @@
+
 // VerifyForm.js
 import React, { useState, useRef } from 'react';
 import Webcam from 'react-webcam';
@@ -26,21 +27,31 @@ const VerifyForm = () => {
         try {
             const formData = new FormData();
 
-            // Convert base64 to Blob
-            const blob = await fetch(capturedImage).then((res) => res.blob());
+            // Convert base64 image to JPEG format
+            const canvas = document.createElement('canvas');
+            const image = document.createElement('img'); // Create image element
+            image.src = capturedImage;
+            image.onload = function () {
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0, image.width, image.height);
+                canvas.toBlob(async function (blob) {
+                    // Append converted blob to FormData with correct content type
+                    formData.append('photo', blob, 'photo.jpg');
 
-            // Append Blob to FormData with correct content type
-            formData.append('photo', blob, 'photo.jpg');
+                    // Make axios call
+                    await axios.post('http://127.0.0.1:8000/evaluate', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
 
-            // Make axios call
-            await axios.post('https://127.0.0.1:8000/evaluate', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+                    // Handle response if needed
+                    console.log('Verification successful');
+                }, 'image/jpeg');
+            };
 
-            // Handle response if needed
-            console.log('Verification successful');
         } catch (error) {
             // Handle error
             console.error('Error occurred:', error);
