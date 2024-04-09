@@ -18,5 +18,5 @@ def tf_classifier(input_img, siamese_model, db_tree, preprocessor, db_path):
             max_prob = prob
             person = name
     if max_prob<0.5:
-        return None
-    return person
+        return None, max_prob
+    return person, max_prob
