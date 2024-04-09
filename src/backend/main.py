@@ -41,11 +41,13 @@ def reset_db():
     try:
         dirs = os.listdir(DB_PATH)
         for directory in dirs:
-            files=os.listdir(os.path.join(DB_PATH, directory))
-            for file in files:
-                os.remove(os.path.join(DB_PATH, directory, file))
-            os.rmdir(os.path.join(DB_PATH, directory))
-        
+            try:
+                files=os.listdir(os.path.join(DB_PATH, directory))
+                for file in files:
+                    os.remove(os.path.join(DB_PATH, directory, file))
+                os.rmdir(os.path.join(DB_PATH, directory))
+            except:
+                continue
         db_tree.tree = {}
         db_tree.save_tree()
         return {'message':'DB reset successful'}
@@ -77,16 +79,43 @@ async def evaluate(photo:UploadFile):
     with open('input.jpg', 'wb+') as buffer:
         buffer.write(photo)
     input_img = preprocess(file_path=photo, ftype='byte')
-    person_siamese = tf_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
-    person_vgg = tf_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
-    person_mbnv2 = tf_classifier(input_img, models['mbnv2'], db_tree,preprocess, DB_PATH)
+    person_siamese, conf_siamese = tf_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
+    person_vgg, conf_vgg = tf_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
+    person_mbnv2, conf_mbnv2 = tf_classifier(input_img, models['mbnv2'], db_tree,preprocess, DB_PATH)
     try:
-        person_facenet = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]['identity'][0].split('\\')[-2]
+        facenet_pred = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]
+        person_facenet = facenet_pred['identity'][0].split('\\')[-2]
+        person_facenet_distance = facenet_pred['distance'][0]
     except:
         person_facenet = None
+        person_facenet_distance = 0.69
     try:
-        person_facenet512 = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet512')[0]['identity'][0].split('\\')[-2]
+        facenet512_pred = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet512')[0]
+        person_facenet512 = facenet512_pred['identity'][0].split('\\')[-2]
+        person_facenet512_distance = facenet512_pred['distance'][0]
     except:
         person_facenet512 = None
-    return {'siamese':person_siamese, 'vgg':person_vgg, 'facenet': person_facenet, 'facenet512': person_facenet512, 'mobile_net_v2':person_mbnv2}
+        person_facenet512_distance = 0.69
+    return {
+        "siamese":{
+            "prediction":person_siamese,
+            "confidence":conf_siamese
+        },
+        "vgg":{
+            "prediction":person_vgg,
+            "confidence":conf_vgg
+        },
+        "mobilenetV2":{
+            "prediction":person_mbnv2,
+            "confidence":conf_mbnv2
+        },
+        "facenet":{
+            "prediction":person_facenet,
+            "distance":person_facenet_distance
+        },
+        "facenet512":{
+            "prediction":person_facenet512,
+            "distance":person_facenet512_distance
+        }
+    }
                     
