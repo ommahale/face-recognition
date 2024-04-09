@@ -1,5 +1,3 @@
-
-// RegisterForm.js
 import React, { useState, useRef } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
@@ -11,6 +9,7 @@ const RegisterForm = ({ onRegister }) => {
     const [photoCaptured, setPhotoCaptured] = useState(false);
     const [capturedImage, setCapturedImage] = useState(null);
     const [submitting, setSubmitting] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleRegister = async () => {
         setSubmitting(true);
@@ -32,6 +31,9 @@ const RegisterForm = ({ onRegister }) => {
 
             // Handle response if needed
             console.log(response.data);
+
+            // Notify user about successful API call
+            setSuccessMessage('Registration successful!');
 
             // Call parent function to handle registration
             onRegister(name);
@@ -68,6 +70,7 @@ const RegisterForm = ({ onRegister }) => {
     const resetCapture = () => {
         setPhotoCaptured(false);
         setCapturedImage(null);
+        setSuccessMessage('');
     };
 
     return (
@@ -95,10 +98,10 @@ const RegisterForm = ({ onRegister }) => {
                         </Button>
                     )}
                 </HStack>
+                {successMessage && <Text mt={4} color="green.500">{successMessage}</Text>}
             </Box>
         </Center>
     );
 };
 
 export default RegisterForm;
-

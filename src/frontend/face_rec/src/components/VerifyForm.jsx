@@ -1,8 +1,7 @@
-// VerifyForm.js
 import React, { useState, useRef } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
-import { Box, Button, Center, Image, HStack, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, Center, Image, Text, HStack, Grid, GridItem } from '@chakra-ui/react';
 
 const VerifyForm = () => {
     const webcamRef = useRef(null);
@@ -50,6 +49,7 @@ const VerifyForm = () => {
 
                     // Handle response
                     setPredictions(response.data);
+                    setSubmitting(false)
                 }, 'image/jpeg');
             };
 
@@ -57,7 +57,7 @@ const VerifyForm = () => {
             // Handle error
             console.error('Error occurred:', error);
         } finally {
-            setSubmitting(false);
+            // setSubmitting(false);
         }
     };
 
@@ -69,31 +69,30 @@ const VerifyForm = () => {
                 ) : (
                     <Image src={capturedImage} alt="Captured" maxWidth="100%" />
                 )}
-
                 <HStack>
-                    {photoCaptured ? (
-                        <Button mt={4} colorScheme="blue" onClick={handleVerify} isLoading={submitting}>
-                            {submitting ? 'Verifying...' : 'Verify'}
-                        </Button>
-                    ) : (
-                        <Button mt={4} colorScheme="teal" onClick={capture}>
-                            Capture
-                        </Button>
-                    )}
-                    {photoCaptured && (
-                        <Button mt={4} colorScheme="red" onClick={resetCapture}>
-                            Reset
-                        </Button>
-                    )}
+                <Button mt={4} colorScheme={photoCaptured ? "blue" : "teal"} onClick={photoCaptured ? handleVerify : capture}>
+                    {photoCaptured ? (submitting ? 'Verifying...' : 'Verify') : 'Capture'}
+                </Button>
+                {photoCaptured && (
+                    <Button mt={4} colorScheme="red" onClick={resetCapture}>
+                        Reset
+                    </Button>
+                )}
                 </HStack>
 
                 {/* Display predictions */}
                 {predictions && (
-                    <VStack mt={4} align="start">
+                    <Grid mt={4} templateColumns="repeat(2, 1fr)" gap={4}>
                         {Object.keys(predictions).map((key) => (
-                            <Text key={key}>{predictions[key].prediction}</Text>
+                            <GridItem key={key}>
+                                <Box p={4} borderWidth="1px" borderRadius="lg">
+                                    <Text fontWeight="bold">{key}</Text>
+                                    <Text>Prediction: {predictions[key].prediction !== null ? predictions[key].prediction : "null"}</Text>
+                                    {/* <Text>Confidence: {predictions[key].confidence !== null ? predictions[key].confidence : "null"}</Text> */}
+                                </Box>
+                            </GridItem>
                         ))}
-                    </VStack>
+                    </Grid>
                 )}
             </Box>
         </Center>
