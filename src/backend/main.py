@@ -1,3 +1,4 @@
+import time
 from fastapi import FastAPI, UploadFile, HTTPException
 from utils.preprocessor import preprocess
 from utils.custom_obj import L1Dist
@@ -7,8 +8,8 @@ import os
 from uuid import uuid4
 import shutil
 from keras.models import load_model
-from utils.classifiers import tf_classifier
-from deepface import DeepFace
+from utils.classifiers import tf_classifier, deepface_classifier
+from concurrent.futures import ThreadPoolExecutor
 DB_PATH = 'db'
 app = FastAPI()
 models = {
@@ -72,7 +73,7 @@ def create_user(name:str, photo:UploadFile):
 
 @app.post('/evaluate')
 async def evaluate(photo:UploadFile):
-    
+    start_time = time.time()
     photo = await photo.read()
     if os.path.exists('input.jpg'):
         os.remove('input.jpg')
@@ -82,20 +83,57 @@ async def evaluate(photo:UploadFile):
     person_siamese, conf_siamese = tf_classifier(input_img, models['siamese'], db_tree,preprocess, DB_PATH)
     person_vgg, conf_vgg = tf_classifier(input_img, models['vgg'], db_tree,preprocess, DB_PATH)
     person_mbnv2, conf_mbnv2 = tf_classifier(input_img, models['mbnv2'], db_tree,preprocess, DB_PATH)
-    try:
-        facenet_pred = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet')[0]
-        person_facenet = facenet_pred['identity'][0].split('\\')[-2]
-        person_facenet_distance = facenet_pred['distance'][0]
-    except:
-        person_facenet = None
-        person_facenet_distance = 0.69
-    try:
-        facenet512_pred = DeepFace.find('input.jpg', db_path='./db',model_name='Facenet512')[0]
-        person_facenet512 = facenet512_pred['identity'][0].split('\\')[-2]
-        person_facenet512_distance = facenet512_pred['distance'][0]
-    except:
-        person_facenet512 = None
-        person_facenet512_distance = 0.69
+    person_facenet, person_facenet_distance = deepface_classifier(image='input.jpg',db_path='./db',model_name='Facenet')
+    person_facenet512, person_facenet512_distance = deepface_classifier(image='input.jpg',db_path='./db',model_name='Facenet512')
+    end_time = time.time()
+    response_time = end_time - start_time
+    print(f"Response time: {response_time:.3f} seconds")
+    return {
+        "siamese":{
+            "prediction":person_siamese,
+            "confidence":conf_siamese
+        },
+        "vgg":{
+            "prediction":person_vgg,
+            "confidence":conf_vgg
+        },
+        "mobilenetV2":{
+            "prediction":person_mbnv2,
+            "confidence":conf_mbnv2
+        },
+        "facenet":{
+            "prediction":person_facenet,
+            "distance":person_facenet_distance
+        },
+        "facenet512":{
+            "prediction":person_facenet512,
+            "distance":person_facenet512_distance
+        }
+    }
+
+@app.post('/thread-evaluate')
+async def evaluate(photo:UploadFile):
+    start_time = time.time()
+    photo = await photo.read()
+    if os.path.exists('input.jpg'):
+        os.remove('input.jpg')
+    with open('input.jpg', 'wb+') as buffer:
+        buffer.write(photo)
+    input_img = preprocess(file_path=photo, ftype='byte')
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        f1= executor.submit(tf_classifier,input_img, models['siamese'], db_tree,preprocess, DB_PATH)
+        f2= executor.submit(tf_classifier,input_img, models['vgg'], db_tree,preprocess, DB_PATH)
+        f3= executor.submit(tf_classifier,input_img, models['mbnv2'], db_tree,preprocess, DB_PATH)
+        f4= executor.submit(deepface_classifier,image='input.jpg',db_path='./db',model_name='Facenet')
+        f5= executor.submit(deepface_classifier,image='input.jpg',db_path='./db',model_name='Facenet512')
+    person_siamese, conf_siamese = f1.result()
+    person_vgg, conf_vgg = f2.result()
+    person_mbnv2, conf_mbnv2 = f3.result()
+    person_facenet, person_facenet_distance = f4.result()
+    person_facenet512, person_facenet512_distance = f5.result()
+    end_time = time.time()
+    response_time = end_time - start_time
+    print(f"Response time: {response_time:.3f} seconds")
     return {
         "siamese":{
             "prediction":person_siamese,

@@ -41,7 +41,7 @@ const VerifyForm = () => {
                     formData.append('photo', blob, 'photo.jpg');
 
                     // Make axios call
-                    const response = await axios.post('http://127.0.0.1:8000/evaluate', formData, {
+                    const response = await axios.post('http://127.0.0.1:8000/thread-evaluate', formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data'
                         }
@@ -88,7 +88,7 @@ const VerifyForm = () => {
                                 <Box p={4} borderWidth="1px" borderRadius="lg">
                                     <Text fontWeight="bold">{key}</Text>
                                     <Text>Prediction: {predictions[key].prediction !== null ? predictions[key].prediction : "null"}</Text>
-                                    {/* <Text>Confidence: {predictions[key].confidence !== null ? predictions[key].confidence : "null"}</Text> */}
+                                    <Text>Confidence: {predictions[key].confidence !== null ? predictions[key].confidence : "null"}</Text> 
                                 </Box>
                             </GridItem>
                         ))}
