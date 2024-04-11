@@ -1,14 +1,26 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from deepface import DeepFace
-def tf_classifier(input_img, siamese_model, db_tree, preprocessor, db_path):
+def tf_classifier(input_img, model, db_tree, preprocessor, db_path):
+    def get_probab(name, file):
+        path = os.path.join(db_path, name, file)
+        validation_img = preprocessor(path)
+        probability = model.predict([input_img, validation_img])[0][0]
+        return probability
     prob_map = {}
+    n = len(db_tree.tree.items())
+
     for name, files in db_tree.tree.items():
         total_probab = 0
-        for file in files:
-            path = os.path.join(db_path, name, file)
-            validation_img = preprocessor(path)
-            probability = siamese_model.predict([input_img, validation_img])[0][0]
-            total_probab+=probability
+        with ThreadPoolExecutor(max_workers=n) as executor:
+            res = executor.map(get_probab, [name]*len(files),files)
+        
+        # for file in files:
+        #     path = os.path.join(db_path, name, file)
+        #     validation_img = preprocessor(path)
+        #     probability = model.predict([input_img, validation_img])[0][0]
+        #     total_probab+=probability
+        total_probab = sum(res)
         mean_probab = total_probab/len(files)
         prob_map[name] = mean_probab
     max_prob = 0
@@ -17,8 +29,6 @@ def tf_classifier(input_img, siamese_model, db_tree, preprocessor, db_path):
         if prob>max_prob:
             max_prob = prob
             person = name
-    if max_prob<0.5:
-        return None, max_prob
     return person, max_prob
 
 def deepface_classifier(image, db_path, model_name):
