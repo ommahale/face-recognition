@@ -110,7 +110,9 @@ async def evaluate(photo:UploadFile):
             "distance":person_facenet512_distance
         }
     }
-
+'''
+Following is the implementation of API route using threads for performace optimization
+'''
 @app.post('/thread-evaluate')
 async def evaluate(photo:UploadFile):
     start_time = time.time()
